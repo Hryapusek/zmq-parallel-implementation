@@ -1,5 +1,7 @@
 #include "s0_jobs.hpp"
 
+#include "algorithms/reduce/s0_reduce_default_strategy.hpp"
+
 #include <string>
 #include <charconv>
 
@@ -23,6 +25,11 @@ namespace s0m4b0dY
         return Job(jobId);
     }
 
+    JobPerformer::JobPerformer()
+    {
+        reduceStrategy_ = std::make_unique<ReduceDefaultStrategy>();
+    }
+
     std::any JobPerformer::performJob(Job job, std::string_view message)
     {
         auto semicolonPos = message.find(':');
@@ -32,11 +39,11 @@ namespace s0m4b0dY
         switch (job)
         {
         case Job::REDUCE:
-            /* code */
+            return reduceStrategy_->reduce(message_data);
             break;
         
         default:
-            break;
+            return std::any();
         }
     }
 

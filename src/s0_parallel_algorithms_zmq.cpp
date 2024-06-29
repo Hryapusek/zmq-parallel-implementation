@@ -31,7 +31,18 @@ void s0m4b0dY::Zmq::worker_task(zmq::context_t& context, int worker_id) {
     }
 }
 
-s0m4b0dY::Zmq::Zmq(int n_threads)
+s0m4b0dY::Zmq::Zmq(int n_threads) :
+    context_(1)
 {
+    zmq::context_t context(1);
 
+    zmq::socket_t backend(context, zmq::socket_type::dealer);
+    backend.bind(internal_connection_string_);
+
+    const int num_workers = 5;
+    std::vector<std::thread> workers;
+    for (int i = 0; i < num_workers; ++i) {
+        workers.emplace_back(worker_task, std::ref(context), i);
+        workers.back().detach();
+    }
 }

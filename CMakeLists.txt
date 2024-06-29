@@ -42,7 +42,7 @@ set(COMMON_PRIVATE_INCLUDES
     include/private
 )
 
-set(COMMON_LIBS ${s0m4b0dY_utils_lib})
+set(COMMON_LIBS ${s0m4b0dY_utils_lib} ${ZeroMQ_LIBRARY})
 
 if (GTEST_EXECUTABLE)
     include(cmake/build_test_executable.cmake)

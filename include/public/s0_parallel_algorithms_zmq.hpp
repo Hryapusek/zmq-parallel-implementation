@@ -24,6 +24,7 @@ namespace s0m4b0dY
   private:
     const std::string internal_connection_string_ = "ipc:///tmp/backend";
     std::vector<std::thread> workers_;
+    zmq::context_t context_;
   };
 
   template <_helpers::AddableIterator Iterator_t>
