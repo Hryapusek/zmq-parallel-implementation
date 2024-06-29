@@ -3,28 +3,36 @@
 
 #include <type_traits>
 #include <vector>
-#include <omp.h>
+#include <thread>
+#include <zmq.hpp>
 
 #include "CommonUtils/s0_type_traits.hpp"
 #include "CommonUtils/s0_utils.hpp"
 
 namespace s0m4b0dY
 {
-  class OpenMPI
+  class Zmq
   {
   public:
+    Zmq(int n_threads);
+
     template <_helpers::AddableIterator Iterator_t>
     _helpers::IteratorValueType<Iterator_t>::value_type reduce(Iterator_t begin, Iterator_t end);
+
+    void worker_task(zmq::context_t& context, int worker_id);
+
+  private:
+    const std::string internal_connection_string_ = "ipc:///tmp/backend";
+    std::vector<std::thread> workers_;
   };
 
   template <_helpers::AddableIterator Iterator_t>
-  inline _helpers::IteratorValueType<Iterator_t>::value_type OpenMPI::reduce(Iterator_t begin, Iterator_t end)
+  inline _helpers::IteratorValueType<Iterator_t>::value_type Zmq::reduce(Iterator_t begin, Iterator_t end)
   {
     using value_type = _helpers::IteratorValueType<Iterator_t>::value_type;
     const auto init_value = 0;
-    std::vector<std::pair<Iterator_t, Iterator_t>> ranges = generateRanges(begin, end, omp_get_max_threads());
+    std::vector<std::pair<Iterator_t, Iterator_t>> ranges = generateRanges(begin, end, 12);
     std::vector<value_type> results(ranges.size(), init_value);
-    #pragma omp parallel for
     for (auto i = 0; i < ranges.size(); ++i)
     {
       const auto &range = ranges[i];

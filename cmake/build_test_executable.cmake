@@ -5,8 +5,9 @@ include(cmake/install_gtest.cmake)
 install_gtest()
 
 set(TEST_EXECUTABLE_SOURCES
-    src/main.cpp
-    ${SOURCE_FILES}
+    gtest/src/main.cpp
+    gtest/src/s0_zmq_parallel_algorithms_test.cpp
+    ${COMMON_SOURCE_FILES}
 )
 set(TEST_EXECUTABLE_INCLUDES_PUBLIC
     ${COMMON_PUBLIC_INCLUDES}
@@ -16,8 +17,6 @@ add_executable(${test_target} ${SOURCE_FILES})
 
 target_sources(${test_target}
     PRIVATE ${TEST_EXECUTABLE_SOURCES}
-        gtest/src/s0_utils_test.cpp
-        gtest/src/s0_omp_parallel_algorithms_test.cpp
     )
 
 target_include_directories(${test_target}

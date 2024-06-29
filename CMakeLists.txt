@@ -26,7 +26,11 @@ set(GTEST_EXECUTABLE ON CACHE BOOL "Build gtest executable?")
 
 set(main_lib "s0m4b0dY_parallel_algorithms_zmq")
 
-set(SOURCE_FILES
+set(COMMON_SOURCE_FILES
+    src/s0_parallel_algorithms_zmq.cpp
+    src/s0_jobs.cpp
+    src/algorithms/reduce/reduce_default_strategy.cpp
+    src/s0_utils.cpp
 )
 
 set(COMMON_PUBLIC_INCLUDES
@@ -54,7 +58,7 @@ target_include_directories(${main_lib}
 target_link_libraries(${main_lib} INTERFACE ${COMMON_LIBS})
 
 # target_sources(${main_lib} # Header only?
-#     PUBLIC ${SOURCE_FILES}
+#     PUBLIC ${COMMON_SOURCE_FILES}
 # )
 
 target_compile_features(${main_lib} INTERFACE cxx_std_20)
