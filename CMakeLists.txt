@@ -19,6 +19,10 @@ find_library(ZeroMQ_LIBRARY
         PATHS ${PC_ZeroMQ_LIBRARY_DIRS}
         )
 
+include(cmake/install_fmt.cmake)
+
+install_fmt()
+
 add_subdirectory(../utils-library ./build/utils)
 get_target_property(${s0m4b0dY_utils_lib}_INCLUDES ${s0m4b0dY_utils_lib} INCLUDE_DIRECTORIES)
 
@@ -28,9 +32,12 @@ set(main_lib "s0m4b0dY_parallel_algorithms_zmq")
 
 set(COMMON_SOURCE_FILES
     src/s0_parallel_algorithms_zmq.cpp
-    src/s0_jobs.cpp
-    src/algorithms/reduce/reduce_default_strategy.cpp
     src/s0_utils.cpp
+    src/s0_jobs/s0_jobs_parser.cpp
+    src/s0_jobs/s0_jobs_performer.cpp
+    src/s0_jobs/s0_jobs.cpp
+    src/s0_jobs/s0_jobs_builder.cpp
+    src/s0_algorithms/s0_reduce/s0_reduce_default_strategy.cpp
 )
 
 set(COMMON_PUBLIC_INCLUDES
@@ -42,7 +49,7 @@ set(COMMON_PRIVATE_INCLUDES
     include/private
 )
 
-set(COMMON_LIBS ${s0m4b0dY_utils_lib} ${ZeroMQ_LIBRARY})
+set(COMMON_LIBS ${s0m4b0dY_utils_lib} ${ZeroMQ_LIBRARY} fmt::fmt)
 
 if (GTEST_EXECUTABLE)
     include(cmake/build_test_executable.cmake)

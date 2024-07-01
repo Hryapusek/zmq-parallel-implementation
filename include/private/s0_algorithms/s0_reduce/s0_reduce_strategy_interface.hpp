@@ -1,8 +1,7 @@
 #ifndef S0_REDUCE_STRATEGY_INTERFACE_HPP
 #define S0_REDUCE_STRATEGY_INTERFACE_HPP
 
-#include <string_view>
-#include <any>
+#include <span>
 
 namespace s0m4b0dY
 {
@@ -12,7 +11,7 @@ namespace s0m4b0dY
         /**
          * @param message should contain only data with numbers separated with whitespaces
          */
-        virtual std::any reduce(std::string_view message) = 0;
+        virtual long long reduce(const std::span<const long long> &numbers) = 0;
     };
 }
 

@@ -5,9 +5,13 @@
 #include <vector>
 #include <thread>
 #include <zmq.hpp>
+#include <span>
 
 #include "CommonUtils/s0_type_traits.hpp"
 #include "CommonUtils/s0_utils.hpp"
+
+#include "s0_jobs/s0_jobs_builder.hpp"
+#include "s0_jobs/s0_jobs_parser.hpp"
 
 namespace s0m4b0dY
 {
@@ -15,42 +19,23 @@ namespace s0m4b0dY
   {
   public:
     Zmq(int n_threads);
+    virtual ~Zmq();
 
-    template <_helpers::AddableIterator Iterator_t>
-    _helpers::IteratorValueType<Iterator_t>::value_type reduce(Iterator_t begin, Iterator_t end);
-
-    void worker_task(zmq::context_t& context, int worker_id);
+    long long reduce(const std::span<const long long> &arr);
 
   private:
-    const std::string internal_connection_string_ = "ipc:///tmp/backend";
-    std::vector<std::thread> workers_;
+    static const std::string internal_connection_string_;
+    int n_threads_;
     zmq::context_t context_;
-  };
+    zmq::socket_t backend_;
+    std::vector<std::jthread> workers_;
+    JobBuilder jobBuilder_;
+    JobParser jobParser_;
 
-  template <_helpers::AddableIterator Iterator_t>
-  inline _helpers::IteratorValueType<Iterator_t>::value_type Zmq::reduce(Iterator_t begin, Iterator_t end)
-  {
-    using value_type = _helpers::IteratorValueType<Iterator_t>::value_type;
-    const auto init_value = 0;
-    std::vector<std::pair<Iterator_t, Iterator_t>> ranges = generateRanges(begin, end, 12);
-    std::vector<value_type> results(ranges.size(), init_value);
-    for (auto i = 0; i < ranges.size(); ++i)
-    {
-      const auto &range = ranges[i];
-      value_type result = init_value;
-      for (auto it = range.first; it != range.second; it++)
-      {
-        result += *it;
-      }
-      results[i] = result;
-    }
-    auto result = init_value;
-    for (const auto &local_result : results)
-    {
-      result += local_result;
-    }
-    return result;
-  }
+    static void worker_task(zmq::context_t& context, int worker_id);
+    void sendMessage(std::string message);
+    std::string recieveMessage();
+  };
 } // namespace s0m4b0dY
 
 #endif

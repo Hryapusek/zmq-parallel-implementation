@@ -8,7 +8,7 @@ namespace s0m4b0dY
     class ReduceDefaultStrategy : public IReduceStrategy
     {
     public:
-        std::any reduce(std::string_view message) override;
+        long long reduce(const std::span<const long long> &numbers) override;
     };
 }
 

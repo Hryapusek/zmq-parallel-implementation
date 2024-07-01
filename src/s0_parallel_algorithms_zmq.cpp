@@ -1,48 +1,106 @@
 #include "s0_parallel_algorithms_zmq.hpp"
 
-namespace
-{
-    
-}
+#include "s0_jobs/s0_jobs_parser.hpp"
+#include "s0_jobs/s0_jobs_performer.hpp"
+
+#include <charconv>
+#include <iostream>
+
+
+const std::string s0m4b0dY::Zmq::internal_connection_string_ = "inproc:///tmp/backend";
 
 void s0m4b0dY::Zmq::worker_task(zmq::context_t& context, int worker_id) {
     zmq::socket_t worker(context, zmq::socket_type::dealer);
     worker.connect(internal_connection_string_);
+    JobPerformer jobPerformer;
+    JobParser jobParser;
 
     while (true) {
-        zmq::message_t identity;
+        try {
         zmq::message_t request;
 
-        worker.recv(identity, zmq::recv_flags::none);
-        worker.recv(request, zmq::recv_flags::none);
+        std::ignore = worker.recv(request, zmq::recv_flags::none);
 
         std::string received_message(static_cast<char*>(request.data()), request.size());
 
         // Simulate some work
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        auto job = jobParser.parseJob(received_message);
+        if (job == Job::EXIT)
+        {
+            return;
+        }
+        auto reply_message = jobPerformer.performJob(job, received_message);
 
-        // Send reply back to client
-        std::string reply_message = "World from worker " + std::to_string(worker_id);
         zmq::message_t reply(reply_message.size());
         memcpy(reply.data(), reply_message.c_str(), reply_message.size());
 
-        worker.send(identity, zmq::send_flags::sndmore);
-        worker.send(reply, zmq::send_flags::none);
+            worker.send(reply, zmq::send_flags::none);
+        } catch (const zmq::error_t& e) {
+            std::cerr << "Error sending message: " << e.what() << std::endl;
+            // Handle the error appropriately, e.g., retry, log, or exit
+        }
     }
 }
 
-s0m4b0dY::Zmq::Zmq(int n_threads) :
-    context_(1)
+void s0m4b0dY::Zmq::sendMessage(std::string message)
 {
-    zmq::context_t context(1);
+    zmq::message_t request(message.size());
+    memcpy(request.data(), message.c_str(), message.size());  
 
-    zmq::socket_t backend(context, zmq::socket_type::dealer);
-    backend.bind(internal_connection_string_);
+    backend_.send(request, zmq::send_flags::none);
+}
 
-    const int num_workers = 5;
-    std::vector<std::thread> workers;
-    for (int i = 0; i < num_workers; ++i) {
-        workers.emplace_back(worker_task, std::ref(context), i);
-        workers.back().detach();
+std::string s0m4b0dY::Zmq::recieveMessage()
+{
+    zmq::message_t reply;
+    std::ignore = backend_.recv(reply, zmq::recv_flags::none);
+    std::string received_reply(static_cast<char*>(reply.data()), reply.size());
+    return received_reply;
+}
+
+s0m4b0dY::Zmq::Zmq(int n_threads) :
+    n_threads_(n_threads),
+    context_(1),
+    backend_(context_, zmq::socket_type::dealer)
+{
+    backend_.bind(internal_connection_string_);
+
+    for (int i = 0; i < n_threads; ++i) {
+        workers_.emplace_back(worker_task, std::ref(context_), i);
+        workers_.back();
     }
+}
+
+s0m4b0dY::Zmq::~Zmq()
+{
+    for (auto i = 0; i < n_threads_*3; i++)
+    {
+        sendMessage(jobBuilder_.buildId(Job::EXIT));
+    }
+    for (int i = 0; i < n_threads_; ++i) {
+        workers_[i].join();
+    }
+}
+
+long long s0m4b0dY::Zmq::reduce(const std::span<const long long> &arr)
+{
+    const auto init_value = 0;
+    auto ranges = generateRanges(arr.begin(), arr.end(), n_threads_);
+    for (auto i = 0; i < ranges.size(); ++i)
+    {
+        const auto &range = ranges[i];
+        auto requestMessage = jobBuilder_.createReduceRequest({range.first, range.second});
+        sendMessage(requestMessage);
+    }
+    auto result = init_value;
+    for (auto i = 0; i < ranges.size(); ++i)
+    {
+        auto reply = recieveMessage();
+        long long local_result;
+        auto conv_result = std::from_chars(reply.data(), reply.data() + reply.size(), local_result);
+
+        assert(conv_result.ec != std::errc::invalid_argument);
+        result += local_result;
+    }
+    return result;
 }
