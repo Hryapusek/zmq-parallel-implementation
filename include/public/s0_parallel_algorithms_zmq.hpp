@@ -32,7 +32,7 @@ namespace s0m4b0dY
     JobBuilder jobBuilder_;
     JobParser jobParser_;
 
-    static void worker_task(zmq::context_t& context, int worker_id);
+    static void worker_task(std::stop_token stop_token, zmq::context_t& context, int worker_id);
     void sendMessage(std::string message);
     std::string recieveMessage();
   };
