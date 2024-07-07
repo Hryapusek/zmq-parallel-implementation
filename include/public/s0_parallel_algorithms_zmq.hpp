@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <vector>
 #include <thread>
+#include <charconv>
 #include <zmq.hpp>
 #include <span>
 
@@ -21,7 +22,8 @@ namespace s0m4b0dY
     Zmq(int n_threads);
     virtual ~Zmq();
 
-    long long reduce(const std::span<const long long> &arr);
+    template < class T >
+    long long reduce(std::span<const T> arr);
 
   private:
     static const std::string internal_connection_string_;
@@ -36,6 +38,31 @@ namespace s0m4b0dY
     void sendMessage(std::string message);
     std::string recieveMessage();
   };
+
+  template < class T >
+  long long s0m4b0dY::Zmq::reduce(std::span<const T> arr)
+  {
+    const auto init_value = 0;
+    auto ranges = generateRanges(arr.begin(), arr.end(), n_threads_);
+    for (auto i = 0; i < ranges.size(); ++i)
+    {
+      const auto &range = ranges[i];
+      auto requestMessage = jobBuilder_.createReduceRequest(arr);
+      sendMessage(requestMessage);
+    }
+    auto result = init_value;
+    for (auto i = 0; i < ranges.size(); ++i)
+    {
+      auto reply = recieveMessage();
+      long long local_result;
+      auto conv_result = std::from_chars(reply.data(), reply.data() + reply.size(), local_result);
+
+      assert(conv_result.ec != std::errc::invalid_argument);
+      result += local_result;
+    }
+    return result;
+  }
+
 } // namespace s0m4b0dY
 
 #endif

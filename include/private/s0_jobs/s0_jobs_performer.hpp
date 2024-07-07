@@ -4,6 +4,8 @@
 #include "s0_jobs/s0_jobs_parser.hpp"
 #include "s0_jobs/s0_jobs_builder.hpp"
 
+#include "s0_algorithms/s0_reduce/s0_reduce_registry.hpp"
+
 
 namespace s0m4b0dY
 {
@@ -17,9 +19,9 @@ namespace s0m4b0dY
         std::string performJob(Job job, std::string_view message);
     
     private:
-        std::unique_ptr<IReduceStrategy> reduceStrategy_ = nullptr;
         JobBuilder jobBuilder_;
         JobParser jobParser_;
+        static std::vector<std::unique_ptr<GeneralReduceInterface>> reduceImplementations_;
     };
 }
 

@@ -23,6 +23,8 @@ include(cmake/install_fmt.cmake)
 
 install_fmt()
 
+find_package(Boost COMPONENTS serialization system REQUIRED)
+
 add_subdirectory(../utils-library ./build/utils)
 get_target_property(${s0m4b0dY_utils_lib}_INCLUDES ${s0m4b0dY_utils_lib} INCLUDE_DIRECTORIES)
 
@@ -37,7 +39,6 @@ set(COMMON_SOURCE_FILES
     src/s0_jobs/s0_jobs_performer.cpp
     src/s0_jobs/s0_jobs.cpp
     src/s0_jobs/s0_jobs_builder.cpp
-    src/s0_algorithms/s0_reduce/s0_reduce_default_strategy.cpp
 )
 
 set(COMMON_PUBLIC_INCLUDES
@@ -49,7 +50,7 @@ set(COMMON_PRIVATE_INCLUDES
     include/private
 )
 
-set(COMMON_LIBS ${s0m4b0dY_utils_lib} ${ZeroMQ_LIBRARY} fmt::fmt)
+set(COMMON_LIBS ${s0m4b0dY_utils_lib} ${ZeroMQ_LIBRARY} fmt::fmt Boost::serialization Boost::system)
 
 if (GTEST_EXECUTABLE)
     include(cmake/build_test_executable.cmake)

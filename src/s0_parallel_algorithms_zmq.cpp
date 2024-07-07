@@ -85,26 +85,3 @@ s0m4b0dY::Zmq::~Zmq()
 		workers_[i].join();
 	}
 }
-
-long long s0m4b0dY::Zmq::reduce(const std::span<const long long> &arr)
-{
-	const auto init_value = 0;
-	auto ranges = generateRanges(arr.begin(), arr.end(), n_threads_);
-	for (auto i = 0; i < ranges.size(); ++i)
-	{
-		const auto &range = ranges[i];
-		auto requestMessage = jobBuilder_.createReduceRequest({range.first, range.second});
-		sendMessage(requestMessage);
-	}
-	auto result = init_value;
-	for (auto i = 0; i < ranges.size(); ++i)
-	{
-		auto reply = recieveMessage();
-		long long local_result;
-		auto conv_result = std::from_chars(reply.data(), reply.data() + reply.size(), local_result);
-
-		assert(conv_result.ec != std::errc::invalid_argument);
-		result += local_result;
-	}
-	return result;
-}

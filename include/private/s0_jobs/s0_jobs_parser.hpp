@@ -11,6 +11,9 @@ namespace s0m4b0dY
     {
     public:
         Job parseJob(std::string_view message);
+        /**
+         * @deprecated Do not use this
+         */
         std::vector<long long> parseNumbersVector(std::string_view message);
     };
 }
